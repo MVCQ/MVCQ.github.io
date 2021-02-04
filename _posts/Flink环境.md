@@ -1,0 +1,72 @@
+**以下涉及的Flink版本为 1.11.2**
+
+# Stand Alone
+机器信息：
+```
+192.168.12.88(master)
+192.168.12.87(worker1)
+192.168.12.86(worker2)
+```
+* 下载flink-1.11.2-bin-scala_2.11,并解压至本地
+下载tar包至master机器：/opt/app/flink   
+在其他两台work机器创建相同的目录
+* 配置works & masters
+```
+vim ./flink-1.11.2/conf/works
+192.168.12.87
+192.168.12.86
+```
+```
+vim ./flink-1.11.2/conf/master
+192.168.12.88
+```
+* 修改配置文件 flink-conf.yaml
+```
+vim ./flink-1.11.2/conf/flink-conf.yaml
+
+jobmanager.memory.process.size: 10240m
+taskmanager.memory.process.size: 10240m
+taskmanager.numberOfTaskSlots: 8
+...
+...
+```
+* 分发flink包至其他两台机器
+```
+scp /opt/app/flink/flink/flink-1.11.2 user@192.168.12.87:/opt/app/flink/flink
+scp /opt/app/flink/flink/flink-1.11.2 user@192.168.12.86:/opt/app/flink/flink
+```
+* 启动集群
+进入master机器：
+```
+cd /opt/app/flink/flink/flink-1.11.2
+./bin start-cluster.sh
+```
+* 查看集群
+```
+访问 192.168.12.88:8081 打开webUI
+```
+
+# On Yarn
+* 下载flink-1.11.2-bin-scala_2.11,并解压至本地
+* 检查机器的java版本
+```
+echo $JAVA_HOME
+```
+如果java home显示的版本小于1.8   
+需要手动导入java 高版本的包
+```
+export JAVA_HOME=/usr/java/1.8
+```
+同时还需要保证hadoop集群的java版本1.8+   
+并且，hadoop集群的1.8+的java路径需要和flink客户端所在机器的1.8+java路径一致   
+如果不一致，并且无法改变hadoop集群的java路径，那就手动改变本地的java路径    
+总之要保证两个java路径一致，否则job提交到hadoop集群后，将无法找到相关的路径
+* 导入hadoop环境
+```
+export HADOOP_CONF_DIR=/opt/app/hadoop-2.6.0-cdh5.8.3/etc/hadoop
+export HADOOP_CLASSPATH=`/opt/app/hadoop-2.6.0-cdh5.8.3/bin/hadoop classpath`
+```
+* 启动Flink Job
+```
+./bin/flink run-application -t yarn-application ......
+```
